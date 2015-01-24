@@ -1,0 +1,53 @@
+######################################################################################
+
+BASE_URL = 'http://kissanime.com'
+ICON_COVER = "icon-cover.png"
+
+######################################################################################
+# Loads metadata from ep_url and returns VideoClipObject 
+
+def MetadataObjectForURL(url):
+	
+	show_data = HTML.ElementFromURL(url.split("??",1)[0].rsplit('/',1)[0])
+	ep_title = url.split("??",1)[0].rsplit('/',1)[1].rsplit('?id',1)[0]
+	show_thumb = show_data.xpath("//div[@id='rightside']//img/@src")[0]
+			
+	return VideoClipObject(
+		title = ep_title,
+		thumb = show_thumb
+		)
+
+######################################################################################
+# Sets up and sends a request for the video iframe link before passing to PlayVideo
+
+def MediaObjectsForURL(url):
+
+	ep_url = url.split("??",1)[1]
+	
+	if ep_url.find("itag=37") > 0:
+		resolution = 1080 
+
+	elif ep_url.find("itag=22") > 0:
+		resolution = 720 
+
+	else:
+		resolution = 360 
+
+	return[
+		MediaObject(
+			optimized_for_streaming = True,
+			container = Container.MP4,
+			audio_channels = 2,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			video_resolution = resolution,
+			parts = [PartObject(key=Callback(PlayVideo, url = ep_url))]
+			)
+		]
+		
+def PlayVideo(url):
+ 
+    return Redirect(url)
+
+
+
