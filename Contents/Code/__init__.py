@@ -88,45 +88,72 @@ def Search(query):
 
 @route(PREFIX + '/bookmark')
 def Bookmark():
-    	oc = ObjectContainer()
+    
+	oc = ObjectContainer()
 
-	#setup the login request url
-	request_url = "http://kissanime.com/Login"
-	ad_bookmark = "http://kissanime.com/BookmarkList"
-	values = {
-		'username':Prefs["username"],
-		'password':Prefs["password"]
-		}
-
-	#do http request for search data
-	page = HTTP.Request(request_url, values = values)
-	
-	page_data = HTML.ElementFromURL(ad_bookmark)
-	data = HTML.StringFromElement(page_data)
-
-	list = page_data.xpath("//table[@class='listing']//tr")
-	list = list[2:]
-	
-	for each in list:
-
-		show_url = BASE_URL + each.xpath(".//td//a/@href")[0]
-		page_data = HTML.ElementFromURL(show_url)
-		show_title = show_url.rsplit('/',1)[1]
-		show_thumb = page_data.xpath("//div[@id='rightside']//img/@src")[0]
+	if Prefs["login"] == 0:
 		
+		for each in Dict:
+			show_url = Dict[each]
+			page_data = HTML.ElementFromURL(show_url)
+			show_title = show_url.rsplit('/',1)[1]
+			show_thumb = page_data.xpath("//div[@id='rightside']//img/@src")[0]
+			
+			oc.add(DirectoryObject(
+				key = Callback(PageEpisodes, show_title = show_title, show_url = show_url),
+				title = show_title,
+				thumb = Resource.ContentsOfURLWithFallback(url = show_thumb, fallback='icon-cover.png'),
+				)
+			)
+		
+		#add a way to clear bookmarks list
 		oc.add(DirectoryObject(
-			key = Callback(PageEpisodes, show_title = show_title, show_url = show_url),
-			title = show_title,
-			thumb = Resource.ContentsOfURLWithFallback(url = show_thumb, fallback='icon-cover.png'),
+			key = Callback(ClearBookmarks),
+			title = "Clear Bookmarks",
+			thumb = R(ICON_QUEUE),
+			summary = "CAUTION! This will clear your entire bookmark list!"
 			)
 		)
+		
+	else:
+		
+		#setup the login request url
+		request_url = "http://kissanime.com/Login"
+		ad_bookmark = "http://kissanime.com/BookmarkList"
+		values = {
+			'username':Prefs["username"],
+			'password':Prefs["password"]
+			}
+
+		#do http request for search data
+		page = HTTP.Request(request_url, values = values)
+		
+		page_data = HTML.ElementFromURL(ad_bookmark)
+		data = HTML.StringFromElement(page_data)
+
+		list = page_data.xpath("//table[@class='listing']//tr")
+		list = list[2:]
+		
+		for each in list:
+
+			show_url = BASE_URL + each.xpath(".//td//a/@href")[0]
+			page_data = HTML.ElementFromURL(show_url)
+			show_title = show_url.rsplit('/',1)[1]
+			show_thumb = page_data.xpath("//div[@id='rightside']//img/@src")[0]
+			
+			oc.add(DirectoryObject(
+				key = Callback(PageEpisodes, show_title = show_title, show_url = show_url),
+				title = show_title,
+				thumb = Resource.ContentsOfURLWithFallback(url = show_thumb, fallback='icon-cover.png'),
+				)
+			)
+		
+		#check for zero results and display error
+		if len(oc) < 1:
+			Log ("No shows found! Check search query.")
+			return ObjectContainer(header="Error", message="Nothing found! Try something less specific.") 
 	
-	#check for zero results and display error
-	if len(oc) < 1:
-		Log ("No shows found! Check search query.")
-		return ObjectContainer(header="Error", message="Nothing found! Try something less specific.") 
-	
-     	return oc
+	return oc
 
 #####################################################################################
 # Page Episodes
@@ -139,7 +166,6 @@ def PageEpisodes(show_title, show_url):
 	page_data = HTML.ElementFromURL(show_url)
 	show_thumb = page_data.xpath("//div[@id='rightside']//img/@src")[0]
 	show_ep_count = len(page_data.xpath("//div[@id='leftside']//table[@class='listing']//tr")) - 2
-	#show_summary = page_data.xpath("//div[@id='leftside']/div[1]/div[2]/div[2]/p[6]/text()")[0]
 	eps_list = page_data.xpath("//div[@id='leftside']//table[@class='listing']//tr/td//a/@href")
 	eps_list.reverse()
 	
@@ -159,7 +185,6 @@ def PageEpisodes(show_title, show_url):
 			key = Callback(ListEpisodes, show_title = show_title, show_url = show_url, start_ep = start_ep, end_ep = end_ep),
 			title = "Episodes " + start_ep_title + " - " + end_ep_title,
 			thumb = Resource.ContentsOfURLWithFallback(url = show_thumb, fallback='icon-cover.png'),
-			#summary = show_summary
 			)
 		)
 		
@@ -168,6 +193,16 @@ def PageEpisodes(show_title, show_url):
 	
 	#if total eps is divisible by 20, add bookmark link and return
 	if (show_ep_count % 20) == 0:	
+		
+		if Prefs["login"] == 0:
+			#provide a way to add or remove from favourites list
+			oc.add(DirectoryObject(
+				key = Callback(AddBookmark, show_title = show_title, show_url = show_url),
+				title = "Add Bookmark",
+				summary = "You can add " + show_title + " to your Bookmarks list, to make it easier to find later.",
+				thumb = R(ICON_QUEUE)
+				)
+			)	
 		
 		return oc
 	
@@ -183,9 +218,18 @@ def PageEpisodes(show_title, show_url):
 			key = Callback(ListEpisodes, show_title = show_title, show_url = show_url, start_ep = start_ep, end_ep = end_ep),
 			title = "Episodes " + start_ep_title + " - " + end_ep_title,
 			thumb = Resource.ContentsOfURLWithFallback(url = show_thumb, fallback='icon-cover.png'),
-			#summary = show_summary
 			)
-		)	
+		)
+
+		if Prefs["login"] == 0:
+			#provide a way to add or remove from favourites list
+			oc.add(DirectoryObject(
+				key = Callback(AddBookmark, show_title = show_title, show_url = show_url),
+				title = "Add Bookmark",
+				summary = "You can add " + show_title + " to your Bookmarks list, to make it easier to find later.",
+				thumb = R(ICON_QUEUE)
+				)
+			)	
 		
 		return oc
 
@@ -351,3 +395,22 @@ def Episodes(show_title, ep_title, ep_url):
 	
 	
 	return oc
+	
+#####################################################################################
+# Add Bookmark
+#####################################################################################	
+@route(PREFIX + "/addbookmark")
+def AddBookmark(show_title, show_url):
+	
+	Dict[show_title] = show_url
+	Dict.Save()
+	return ObjectContainer(header=show_title, message='This show has been added to your bookmarks.')
+	
+#####################################################################################
+# Clear Bookmark
+#####################################################################################
+@route(PREFIX + "/clearbookmarks")
+def ClearBookmarks():
+
+	Dict.Reset()
+	return ObjectContainer(header="My Bookmarks", message='Your bookmark list has been cleared.')

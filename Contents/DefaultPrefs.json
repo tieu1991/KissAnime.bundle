@@ -1,5 +1,18 @@
 [
 	{
+		"id": "quality",
+		"type": "enum",
+		"label": "Quality",
+		"values": ["Choose", "1080p", "720p", "360p"],
+		"default": "1080p"
+	},
+	{
+		"id": "login",
+		"type": "bool",
+		"label": "Enable Login (Slower loading of bookmark)",
+		"default": "false"
+	},
+	{
 		"id": "username",
 		"type": "text",
 		"label": "Username",
@@ -11,12 +24,5 @@
 		"label": "Password",
 		"default": "",
 		"option": "hidden"
-	},
-	{
-		"id": "quality",
-		"type": "enum",
-		"label": "Quality",
-		"values": ["Choose", "1080p", "720p", "360p"],
-		"default": "Auto"
 	}
 ]
