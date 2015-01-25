@@ -187,7 +187,7 @@ def PageEpisodes(show_title, show_url):
 	page_data = HTML.ElementFromURL(show_url)
 	show_thumb = page_data.xpath("//div[@id='rightside']//img/@src")[0]
 	show_ep_count = len(page_data.xpath("//div[@id='leftside']//table[@class='listing']//tr")) - 2
-	eps_list = page_data.xpath("//div[@id='leftside']//table[@class='listing']//tr/td//a/@href")
+	eps_list = page_data.xpath("//div[@id='leftside']//table[@class='listing']//tr/td//a/text()")
 	eps_list.reverse()
 	
 	#set a start point and determine how many objects we will need
@@ -199,8 +199,8 @@ def PageEpisodes(show_title, show_url):
 	
 		start_ep  = offset
 		end_ep = offset + 20
-		start_ep_title = ((eps_list[(start_ep)].rsplit('-',1)[1]).rsplit('?id',1)[0]).strip()
-		end_ep_title = ((eps_list[(end_ep-1)].rsplit('-',1)[1]).rsplit('?id',1)[0]).strip()
+		start_ep_title = eps_list[(start_ep)].replace(" - ","&").rsplit(" ",1)[1]
+		end_ep_title = eps_list[(end_ep-1)].replace(" - ","&").rsplit(" ",1)[1]
 		
 		oc.add(DirectoryObject(
 			key = Callback(ListEpisodes, show_title = show_title, show_url = show_url, start_ep = start_ep, end_ep = end_ep),
@@ -232,8 +232,8 @@ def PageEpisodes(show_title, show_url):
 
 		start_ep = offset
 		end_ep = (offset + (show_ep_count % 20))
-		start_ep_title = ((eps_list[(start_ep)].rsplit('-',1)[1]).rsplit('?id',1)[0]).strip()
-		end_ep_title = ((eps_list[(end_ep-1)].rsplit('-',1)[1]).rsplit('?id',1)[0]).strip()
+		start_ep_title = eps_list[(start_ep)].replace(" - ","&").rsplit(" ",1)[1]
+		end_ep_title = eps_list[(end_ep-1)].replace(" - ","&").rsplit(" ",1)[1]
 		
 		oc.add(DirectoryObject(
 			key = Callback(ListEpisodes, show_title = show_title, show_url = show_url, start_ep = start_ep, end_ep = end_ep),
@@ -263,12 +263,13 @@ def ListEpisodes(show_title, show_url, start_ep, end_ep):
 
 	oc = ObjectContainer(title1 = show_title)
 	page_data = HTML.ElementFromURL(show_url)
-	eps_list = page_data.xpath("//div[@id='leftside']//table[@class='listing']//tr/td//a/@href")
+	eps_list = page_data.xpath("//div[@id='leftside']//table[@class='listing']//tr/td//a")
 	eps_list.reverse()
 	
 	for each in eps_list[int(start_ep):int(end_ep)]:
-		ep_url = BASE_URL + each
-		ep_title = (each.rsplit('/',1)[1]).rsplit('?id',1)[0]
+		ep_url = BASE_URL + each.xpath("./@href")[0]
+		ep_title = each.xpath("./text()")[0].replace(" - ","&").rsplit(" ",2)
+		ep_title = ep_title[1] + " " + ep_title[2]
 		
 		if Prefs["quality"] == "Choose":
 		
