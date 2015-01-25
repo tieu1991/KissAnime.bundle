@@ -64,13 +64,20 @@ def Search(query):
 
 		show_url = BASE_URL + each.xpath(".//td//a/@href")[0]
 		page_data = HTML.ElementFromURL(show_url)
-		show_title = show_url.rsplit('/',1)[1]
+		show_title = page_data.xpath("//*[@id='leftside']/div[1]/div[2]/div[2]/a/text()")[0]
+		show_summary = page_data.xpath("//*[@id='leftside']/div[1]/div[2]/div[2]//p")
+		i = len(show_summary) - 1
+		show_summary = show_summary[i].xpath(".//text()")
+		summary = ""
+		for each in show_summary:
+			summary = summary + " " + each
 		show_thumb = page_data.xpath("//div[@id='rightside']//img/@src")[0]
 		
 		oc.add(DirectoryObject(
 			key = Callback(PageEpisodes, show_title = show_title, show_url = show_url),
 			title = show_title,
-			thumb = Resource.ContentsOfURLWithFallback(url = show_thumb, fallback='icon-cover.png'),
+			summary = summary,
+			thumb = Resource.ContentsOfURLWithFallback(url = show_thumb, fallback='icon-cover.png')
 			)
 		)
 	
@@ -99,13 +106,16 @@ def Bookmark():
 			show_title = page_data.xpath("//*[@id='leftside']/div[1]/div[2]/div[2]/a/text()")[0]
 			show_summary = page_data.xpath("//*[@id='leftside']/div[1]/div[2]/div[2]//p")
 			i = len(show_summary) - 1
-			show_summary = show_summary[i].xpath("./text()")[0]
+			show_summary = show_summary[i].xpath(".//text()")
+			summary = ""
+			for each in show_summary:
+				summary = summary + " " + each
 			show_thumb = page_data.xpath("//div[@id='rightside']//img/@src")[0]
 			
 			oc.add(DirectoryObject(
 				key = Callback(PageEpisodes, show_title = show_title, show_url = show_url),
 				title = show_title,
-				summary = show_summary,
+				summary = summary,
 				thumb = Resource.ContentsOfURLWithFallback(url = show_thumb, fallback='icon-cover.png'),
 				)
 			)
@@ -145,13 +155,16 @@ def Bookmark():
 			show_title = page_data.xpath("//*[@id='leftside']/div[1]/div[2]/div[2]/a/text()")[0]
 			show_summary = page_data.xpath("//*[@id='leftside']/div[1]/div[2]/div[2]//p")
 			i = len(show_summary) - 1
-			show_summary = show_summary[i].xpath("./text()")[0]
+			show_summary = show_summary[i].xpath(".//text()")
+			summary = ""
+			for each in show_summary:
+				summary = summary + " " + each
 			show_thumb = page_data.xpath("//div[@id='rightside']//img/@src")[0]
 			
 			oc.add(DirectoryObject(
 				key = Callback(PageEpisodes, show_title = show_title, show_url = show_url),
 				title = show_title,
-				summary = show_summary,
+				summary = summary,
 				thumb = Resource.ContentsOfURLWithFallback(url = show_thumb, fallback='icon-cover.png'),
 				)
 			)
