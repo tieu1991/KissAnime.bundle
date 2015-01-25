@@ -10,10 +10,20 @@ def MetadataObjectForURL(url):
 	
 	show_data = HTML.ElementFromURL(url.split("??",1)[0].rsplit('/',1)[0])
 	ep_title = url.split("??",1)[0].rsplit('/',1)[1].rsplit('?id',1)[0]
+	show_genres = show_data.xpath("//*[@id='leftside']/div[1]/div[2]/div[2]/p[2]//a/text()")
+	show_summary = show_data.xpath("//*[@id='leftside']/div[1]/div[2]/div[2]//p")
+	i = len(show_summary) - 1
+	show_summary = show_summary[i].xpath(".//text()")
+	summary = ""
+	for each in show_summary:
+		summary = summary + " " + each
+		
 	show_thumb = show_data.xpath("//div[@id='rightside']//img/@src")[0]
 			
-	return VideoClipObject(
+	return MovieObject(
 		title = ep_title,
+		genres = show_genres,
+		summary = summary,
 		thumb = show_thumb
 		)
 
