@@ -1,6 +1,6 @@
 # KissAnime.bundle
 
-First Version of KissAnime plugin for Plex
+Version 1.1
 
 By tieu1991
 
