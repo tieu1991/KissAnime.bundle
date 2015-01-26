@@ -116,7 +116,7 @@ def Bookmark():
 				key = Callback(PageEpisodes, show_title = show_title, show_url = show_url),
 				title = show_title,
 				summary = summary,
-				thumb = Resource.ContentsOfURLWithFallback(url = show_thumb, fallback='icon-cover.png'),
+				thumb = Resource.ContentsOfURLWithFallback(url = show_thumb, fallback='icon-cover.png')
 				)
 			)
 		
@@ -147,8 +147,71 @@ def Bookmark():
 
 		list = page_data.xpath("//table[@class='listing']//tr")
 		list = list[2:]
+		show_count = len(list)
 		
-		for each in list:
+		#set a start point and determine how many objects we will need
+		offset = 0
+		rotation = (show_count - (show_count % 10)) / 10
+
+		#add a directory object for every 10 shows
+		while rotation > 0:
+		
+			start_show  = offset
+			end_show = offset + 10
+			start_show_title = list[(start_show)].xpath(".//td//a/@href")[0].rsplit("/",1)[1][:3]
+			end_show_title = list[(end_show-1)].xpath(".//td//a/@href")[0].rsplit("/",1)[1][:3]
+			
+			oc.add(DirectoryObject(
+				key = Callback(ListShows, start_show = start_show, end_show = end_show),
+				title = start_show_title + "... to " + end_show_title + "...",
+				thumb = R(ICON_LIST)
+				)
+			)
+			
+			offset += 10
+			rotation = rotation - 1
+		
+		if (show_count % 10) != 0:
+
+			start_show = offset
+			end_show = (offset + (show_count % 10))
+			start_show_title = list[(start_show)].xpath(".//td//a/@href")[0].rsplit("/",1)[1][:3]
+			end_show_title = list[(end_show-1)].xpath(".//td//a/@href")[0].rsplit("/",1)[1][:3]
+			
+			oc.add(DirectoryObject(
+				key = Callback(ListShows, start_show = start_show, end_show = end_show),
+				title = start_show_title + "... to " + end_show_title + "...",
+				thumb = R(ICON_LIST)
+				)
+			) 
+	
+	return oc
+#####################################################################################
+# List Shows
+#####################################################################################
+@route(PREFIX + "/listshows")	
+def ListShows(start_show, end_show):
+
+	oc = ObjectContainer()
+	#setup the login request url
+	request_url = "http://kissanime.com/Login"
+	ad_bookmark = "http://kissanime.com/BookmarkList"
+	values = {
+		'username':Prefs["username"],
+		'password':Prefs["password"]
+		}
+		
+	#do http request for search data
+	page = HTTP.Request(request_url, values = values)
+	
+	page_data = HTML.ElementFromURL(ad_bookmark)
+	data = HTML.StringFromElement(page_data)
+	
+	list = page_data.xpath("//table[@class='listing']//tr")
+	list = list[2:]
+	list = list[int(start_show):int(end_show)]
+	
+	for each in list:
 
 			show_url = BASE_URL + each.xpath(".//td//a/@href")[0]
 			page_data = HTML.ElementFromURL(show_url)
@@ -165,15 +228,9 @@ def Bookmark():
 				key = Callback(PageEpisodes, show_title = show_title, show_url = show_url),
 				title = show_title,
 				summary = summary,
-				thumb = Resource.ContentsOfURLWithFallback(url = show_thumb, fallback='icon-cover.png'),
+				thumb = Resource.ContentsOfURLWithFallback(url = show_thumb, fallback='icon-cover.png')
 				)
 			)
-		
-		#check for zero results and display error
-		if len(oc) < 1:
-			Log ("No shows found! Check search query.")
-			return ObjectContainer(header="Error", message="Nothing found! Try something less specific.") 
-	
 	return oc
 
 #####################################################################################
@@ -205,7 +262,7 @@ def PageEpisodes(show_title, show_url):
 		oc.add(DirectoryObject(
 			key = Callback(ListEpisodes, show_title = show_title, show_url = show_url, start_ep = start_ep, end_ep = end_ep),
 			title = "Episodes " + start_ep_title + " - " + end_ep_title,
-			thumb = Resource.ContentsOfURLWithFallback(url = show_thumb, fallback='icon-cover.png'),
+			thumb = Resource.ContentsOfURLWithFallback(url = show_thumb, fallback='icon-cover.png')
 			)
 		)
 		
