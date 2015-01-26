@@ -5,6 +5,7 @@ PREFIX = "/video/KissAnime"
 NAME = "KissAnime"
 
 ICON_LIST = "icon-list.png"
+ART = "art-default.jpg"
 ICON_COVER = "icon-cover.png"
 ICON_SEARCH = "icon-search.png"
 ICON_QUEUE = "icon-queue.png"
@@ -23,6 +24,7 @@ def Start():
 
 # Setup the default breadcrumb title for the plugin
 	ObjectContainer.title1 = NAME
+	ObjectContainer.art = R(ART)
 
 #####################################################################################
 # Main Menu
@@ -32,8 +34,9 @@ def Start():
 # Initialize the plugin
 @handler(PREFIX, NAME)
 def MainMenu():
-    	oc = ObjectContainer()
-    	oc.add(DirectoryObject(key=Callback(Bookmark), title="Bookmark", thumb = R(ICON_LIST)))
+
+	oc = ObjectContainer()
+	oc.add(DirectoryObject(key=Callback(Bookmark), title="Bookmark", thumb = R(ICON_LIST)))
 	oc.add(InputDirectoryObject(key=Callback(Search), title = "Search", prompt = "Search for anime?", thumb = R(ICON_SEARCH)))
 	return oc
 

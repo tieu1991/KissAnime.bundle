@@ -1,6 +1,6 @@
 # KissAnime.bundle
 
-Version 1.1
+Version 1.2
 
 By tieu1991
 
