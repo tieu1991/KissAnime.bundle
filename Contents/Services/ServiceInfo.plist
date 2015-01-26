@@ -9,7 +9,9 @@
 			<key>Identifier</key>
 			<string>com.plexapp.plugins.Kissanime</string>
 			<key>URLPatterns</key>
-			<string>http://kissanime.com/</string>
+			<array>
+				<string>http://kissanime.com/.+</string>
+			</array>
 		</dict>
 	</dict>
 </dict>
