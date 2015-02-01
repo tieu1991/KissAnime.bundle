@@ -146,8 +146,7 @@ def Bookmark():
 		page = HTTP.Request(request_url, values = values)
 		
 		page_data = HTML.ElementFromURL(ad_bookmark)
-		data = HTML.StringFromElement(page_data)
-
+		
 		list = page_data.xpath("//table[@class='listing']//tr")
 		list = list[2:]
 		show_count = len(list)
@@ -161,8 +160,9 @@ def Bookmark():
 		
 			start_show  = offset
 			end_show = offset + 10
-			start_show_title = list[(start_show)].xpath(".//td//a/@href")[0].rsplit("/",1)[1][:3]
-			end_show_title = list[(end_show-1)].xpath(".//td//a/@href")[0].rsplit("/",1)[1][:3]
+			start_show_title = list[(start_show)].xpath(".//td//a/@href")[0].rsplit("/",1)[1][:4]
+			end_show_title = list[(end_show-1)].xpath(".//td//a/@href")[0].rsplit("/",1)[1][:4]
+			
 			
 			oc.add(DirectoryObject(
 				key = Callback(ListShows, start_show = start_show, end_show = end_show),
@@ -178,8 +178,8 @@ def Bookmark():
 
 			start_show = offset
 			end_show = (offset + (show_count % 10))
-			start_show_title = list[(start_show)].xpath(".//td//a/@href")[0].rsplit("/",1)[1][:3]
-			end_show_title = list[(end_show-1)].xpath(".//td//a/@href")[0].rsplit("/",1)[1][:3]
+			start_show_title = list[(start_show)].xpath(".//td//a/@href")[0].rsplit("/",1)[1][:4]
+			end_show_title = list[(end_show-1)].xpath(".//td//a/@href")[0].rsplit("/",1)[1][:4]
 			
 			oc.add(DirectoryObject(
 				key = Callback(ListShows, start_show = start_show, end_show = end_show),
@@ -208,7 +208,6 @@ def ListShows(start_show, end_show):
 	page = HTTP.Request(request_url, values = values)
 	
 	page_data = HTML.ElementFromURL(ad_bookmark)
-	data = HTML.StringFromElement(page_data)
 	
 	list = page_data.xpath("//table[@class='listing']//tr")
 	list = list[2:]
@@ -259,8 +258,8 @@ def PageEpisodes(show_title, show_url):
 	
 		start_ep  = offset
 		end_ep = offset + 20
-		start_ep_title = eps_list[(start_ep)].replace(" - ","&").rsplit(" ",1)[1]
-		end_ep_title = eps_list[(end_ep-1)].replace(" - ","&").rsplit(" ",1)[1]
+		start_ep_title = eps_list[(start_ep)].split((show_title + " "),1)[1].split(" ")[1]
+		end_ep_title = eps_list[(end_ep-1)].split((show_title + " "),1)[1].split(" ")[1]
 		
 		oc.add(DirectoryObject(
 			key = Callback(ListEpisodes, show_title = show_title, show_url = show_url, start_ep = start_ep, end_ep = end_ep),
@@ -292,8 +291,8 @@ def PageEpisodes(show_title, show_url):
 
 		start_ep = offset
 		end_ep = (offset + (show_ep_count % 20))
-		start_ep_title = eps_list[(start_ep)].replace(" - ","&").rsplit(" ",1)[1]
-		end_ep_title = eps_list[(end_ep-1)].replace(" - ","&").rsplit(" ",1)[1]
+		start_ep_title = eps_list[(start_ep)].split((show_title + " "),1)[1].split(" ")[1]
+		end_ep_title = eps_list[(end_ep-1)].split((show_title + " "),1)[1].split(" ")[1]
 		
 		oc.add(DirectoryObject(
 			key = Callback(ListEpisodes, show_title = show_title, show_url = show_url, start_ep = start_ep, end_ep = end_ep),
@@ -328,104 +327,106 @@ def ListEpisodes(show_title, show_url, start_ep, end_ep):
 	
 	for each in eps_list[int(start_ep):int(end_ep)]:
 		ep_url = BASE_URL + each.xpath("./@href")[0]
-		ep_title = each.xpath("./text()")[0].replace(" - ","&").rsplit(" ",2)
-		ep_title = ep_title[1] + " " + ep_title[2]
+		ep_title = each.xpath("./text()")[0].split(show_title,1)[1]
+		Log(ep_title)
 		
-		if Prefs["quality"] == "Choose":
-		
-			oc.add(DirectoryObject(
-				key = Callback(Episodes, show_title = show_title, ep_title = ep_title, ep_url = ep_url), 
-				title = ep_title
+		if ep_title.find("_") < 1:
+			
+			if Prefs["quality"] == "Choose":
+			
+				oc.add(DirectoryObject(
+					key = Callback(Episodes, show_title = show_title, ep_title = ep_title, ep_url = ep_url), 
+					title = ep_title
+					)
 				)
-			)
+				
+			elif Prefs["quality"] == "1080p":
 			
-		elif Prefs["quality"] == "1080p":
-		
-			page_data = HTML.ElementFromURL(ep_url)
-			data = HTML.StringFromElement(page_data)
-			
-			txha = RE_txha.search(data).group().split("= '",1)[1]
-			fmt_stream = txha.split("=",2)[2].split("&",1)[0]
-			fmt_stream = fmt_stream.replace("%252C",",").replace("%2f","/").replace("%3f","?").replace("%3d","=").replace("%26","&").replace("%3a",":").replace("https","http")
-			
-			
-			if fmt_stream.find("itag=37") > 0:
-				url = ep_url + "??" + fmt_stream.split("37%7C",1)[1].split("%2C",1)[0]
-				title = ep_title + " - 1920x1080"
+				page_data = HTML.ElementFromURL(ep_url)
+				data = HTML.StringFromElement(page_data)
+				
+				txha = RE_txha.search(data).group().split("= '",1)[1]
+				fmt_stream = txha.split("=",2)[2].split("&",1)[0]
+				fmt_stream = fmt_stream.replace("%252C",",").replace("%2f","/").replace("%3f","?").replace("%3d","=").replace("%26","&").replace("%3a",":").replace("https","http")
+				
+				
+				if fmt_stream.find("itag=37") > 0:
+					url = ep_url + "??" + fmt_stream.split("37%7C",1)[1].split("%2C",1)[0]
+					title = ep_title + " - 1920x1080"
 
-				oc.add(VideoClipObject(
-					url = url,
-					title = title
+					oc.add(VideoClipObject(
+						url = url,
+						title = title
+						)
 					)
-				)
+						
+				elif fmt_stream.find("itag=22") > 0:
+					url = ep_url + "??" + fmt_stream.split("22%7C",1)[1].split("%2C",1)[0]
+					title = ep_title + " - 1280x720"
 					
-			elif fmt_stream.find("itag=22") > 0:
-				url = ep_url + "??" + fmt_stream.split("22%7C",1)[1].split("%2C",1)[0]
-				title = ep_title + " - 1280x720"
-				
-				oc.add(VideoClipObject(
-					url = url,
-					title = title
+					oc.add(VideoClipObject(
+						url = url,
+						title = title
+						)
 					)
-				)
-					
-			elif fmt_stream.find("itag=18") > 0:
-				url = ep_url + "??" + fmt_stream.split("18%7C",1)[1]
-				title = ep_title + " - 640x360"
-					
-				oc.add(VideoClipObject(
-					url = url,
-					title = title
+						
+				elif fmt_stream.find("itag=18") > 0:
+					url = ep_url + "??" + fmt_stream.split("18%7C",1)[1]
+					title = ep_title + " - 640x360"
+						
+					oc.add(VideoClipObject(
+						url = url,
+						title = title
+						)
 					)
-				)
-				
-		elif Prefs["quality"] == "720p":
-		
-			page_data = HTML.ElementFromURL(ep_url)
-			data = HTML.StringFromElement(page_data)
+					
+			elif Prefs["quality"] == "720p":
 			
-			txha = RE_txha.search(data).group().split("= '",1)[1]
-			fmt_stream = txha.split("=",2)[2].split("&",1)[0]
-			fmt_stream = fmt_stream.replace("%252C",",").replace("%2f","/").replace("%3f","?").replace("%3d","=").replace("%26","&").replace("%3a",":").replace("https","http")
-					
-			if fmt_stream.find("itag=22") > 0:
-				url = ep_url + "??" + fmt_stream.split("22%7C",1)[1].split("%2C",1)[0]
-				title = ep_title + " - 1280x720"
+				page_data = HTML.ElementFromURL(ep_url)
+				data = HTML.StringFromElement(page_data)
 				
-				oc.add(VideoClipObject(
-					url = url,
-					title = title
-					)
-				)
+				txha = RE_txha.search(data).group().split("= '",1)[1]
+				fmt_stream = txha.split("=",2)[2].split("&",1)[0]
+				fmt_stream = fmt_stream.replace("%252C",",").replace("%2f","/").replace("%3f","?").replace("%3d","=").replace("%26","&").replace("%3a",":").replace("https","http")
+						
+				if fmt_stream.find("itag=22") > 0:
+					url = ep_url + "??" + fmt_stream.split("22%7C",1)[1].split("%2C",1)[0]
+					title = ep_title + " - 1280x720"
 					
-			elif fmt_stream.find("itag=18") > 0:
-				url = ep_url + "??" + fmt_stream.split("18%7C",1)[1]
-				title = ep_title + " - 640x360"
-					
-				oc.add(VideoClipObject(
-					url = url,
-					title = title
+					oc.add(VideoClipObject(
+						url = url,
+						title = title
+						)
 					)
-				)
-				
-		elif Prefs["quality"] == "360p":
-		
-			page_data = HTML.ElementFromURL(ep_url)
-			data = HTML.StringFromElement(page_data)
+						
+				elif fmt_stream.find("itag=18") > 0:
+					url = ep_url + "??" + fmt_stream.split("18%7C",1)[1]
+					title = ep_title + " - 640x360"
+						
+					oc.add(VideoClipObject(
+						url = url,
+						title = title
+						)
+					)
+					
+			elif Prefs["quality"] == "360p":
 			
-			txha = RE_txha.search(data).group().split("= '",1)[1]
-			fmt_stream = txha.split("=",2)[2].split("&",1)[0]
-			fmt_stream = fmt_stream.replace("%252C",",").replace("%2f","/").replace("%3f","?").replace("%3d","=").replace("%26","&").replace("%3a",":").replace("https","http")
-					
-			if fmt_stream.find("itag=18") > 0:
-				url = ep_url + "??" + fmt_stream.split("18%7C",1)[1]
-				title = ep_title + " - 640x360"
-					
-				oc.add(VideoClipObject(
-					url = url,
-					title = title
-					)
-				)		
+				page_data = HTML.ElementFromURL(ep_url)
+				data = HTML.StringFromElement(page_data)
+				
+				txha = RE_txha.search(data).group().split("= '",1)[1]
+				fmt_stream = txha.split("=",2)[2].split("&",1)[0]
+				fmt_stream = fmt_stream.replace("%252C",",").replace("%2f","/").replace("%3f","?").replace("%3d","=").replace("%26","&").replace("%3a",":").replace("https","http")
+						
+				if fmt_stream.find("itag=18") > 0:
+					url = ep_url + "??" + fmt_stream.split("18%7C",1)[1]
+					title = ep_title + " - 640x360"
+						
+					oc.add(VideoClipObject(
+						url = url,
+						title = title
+						)
+					)		
 	return oc
 
 #####################################################################################
