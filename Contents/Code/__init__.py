@@ -95,7 +95,6 @@ def Search(query):
 #####################################################################################
 # Bookmark
 #####################################################################################
-
 @route(PREFIX + '/bookmark')
 def Bookmark():
     
@@ -146,93 +145,131 @@ def Bookmark():
 		page = HTTP.Request(request_url, values = values)
 		
 		page_data = HTML.ElementFromURL(ad_bookmark)
-		
+		list_watched = page_data.xpath("//*[@id='container']/div[1]/div[2]/div[2]/table//tr/td[3]/a[1][@style='display: inline']")
+		show_watched = len(list_watched)
 		list = page_data.xpath("//table[@class='listing']//tr")
-		list = list[2:]
-		show_count = len(list)
+		show_unwatched = len(list) - 2 - show_watched
 		
-		#set a start point and determine how many objects we will need
-		offset = 0
-		rotation = (show_count - (show_count % 10)) / 10
-
-		#add a directory object for every 10 shows
-		while rotation > 0:
-		
-			start_show  = offset
-			end_show = offset + 10
-			start_show_title = list[(start_show)].xpath(".//td//a/@href")[0].rsplit("/",1)[1][:4]
-			end_show_title = list[(end_show-1)].xpath(".//td//a/@href")[0].rsplit("/",1)[1][:4]
-			
+		if show_unwatched > 0:
 			
 			oc.add(DirectoryObject(
-				key = Callback(ListShows, start_show = start_show, end_show = end_show),
-				title = start_show_title + "... to " + end_show_title + "...",
-				thumb = R(ICON_LIST)
+				key = Callback(Folders, watched = 0, show_watched = show_watched),
+				title = "UnWatched Shows",
+				thumb = R(ICON_QUEUE),
 				)
 			)
-			
-			offset += 10
-			rotation = rotation - 1
 		
-		if (show_count % 10) != 0:
-
-			start_show = offset
-			end_show = (offset + (show_count % 10))
-			start_show_title = list[(start_show)].xpath(".//td//a/@href")[0].rsplit("/",1)[1][:4]
-			end_show_title = list[(end_show-1)].xpath(".//td//a/@href")[0].rsplit("/",1)[1][:4]
+		if show_watched > 0:
 			
 			oc.add(DirectoryObject(
-				key = Callback(ListShows, start_show = start_show, end_show = end_show),
-				title = start_show_title + "... to " + end_show_title + "...",
-				thumb = R(ICON_LIST)
+				key = Callback(Folders, watched = 1, show_watched = show_watched),
+				title = "Watched Shows",
+				thumb = R(ICON_QUEUE),
 				)
-			) 
+			)
+		
+	return oc
+	
+#####################################################################################
+# List Folders
+#####################################################################################
+@route(PREFIX + '/folders')
+def Folders(watched, show_watched):
+    
+	oc = ObjectContainer()		
+
+	ad_bookmark = "http://kissanime.com/BookmarkList"
+	
+	page_data = HTML.ElementFromURL(ad_bookmark)
+	list = page_data.xpath("//table[@class='listing']//tr")
+	show_tot = len(list)
+	if int(watched) > 0:
+		list = list[(show_tot-int(show_watched)):]
+	else:
+		list = list[2:(show_tot-int(show_watched))]
+		
+	show_count = len(list)
+	
+	#set a start point and determine how many objects we will need
+	offset = 0
+	rotation = (show_count - (show_count % 10)) / 10
+
+	#add a directory object for every 10 shows
+	while rotation > 0:
+		
+		start_show  = offset
+		end_show = offset + 10
+		start_show_title = list[(start_show)].xpath(".//td//a/@href")[0].rsplit("/",1)[1][:4]
+		end_show_title = list[(end_show-1)].xpath(".//td//a/@href")[0].rsplit("/",1)[1][:4]
+			
+			
+		oc.add(DirectoryObject(
+			key = Callback(ListShows, start_show = start_show, end_show = end_show, watched = watched, show_watched = show_watched),
+			title = start_show_title + "... to " + end_show_title + "...",
+			thumb = R(ICON_LIST)
+			)
+		)
+			
+		offset += 10
+		rotation = rotation - 1
+		
+	if (show_count % 10) != 0:
+
+		start_show = offset
+		end_show = (offset + (show_count % 10))
+		start_show_title = list[(start_show)].xpath(".//td//a/@href")[0].rsplit("/",1)[1][:4]
+		end_show_title = list[(end_show-1)].xpath(".//td//a/@href")[0].rsplit("/",1)[1][:4]
+			
+		oc.add(DirectoryObject(
+			key = Callback(ListShows, start_show = start_show, end_show = end_show, watched = int(watched), show_watched = int(show_watched)),
+			title = start_show_title + "... to " + end_show_title + "...",
+			thumb = R(ICON_LIST)
+			)
+		) 
 	
 	return oc
+	
 #####################################################################################
 # List Shows
 #####################################################################################
 @route(PREFIX + "/listshows")	
-def ListShows(start_show, end_show):
+def ListShows(start_show, end_show, watched, show_watched):
 
 	oc = ObjectContainer()
-	#setup the login request url
-	request_url = "http://kissanime.com/Login"
+
 	ad_bookmark = "http://kissanime.com/BookmarkList"
-	values = {
-		'username':Prefs["username"],
-		'password':Prefs["password"]
-		}
-		
-	#do http request for search data
-	page = HTTP.Request(request_url, values = values)
 	
 	page_data = HTML.ElementFromURL(ad_bookmark)
 	
 	list = page_data.xpath("//table[@class='listing']//tr")
-	list = list[2:]
+	show_tot = len(list)
+	if int(watched) > 0:
+		list = list[(show_tot-int(show_watched)):]
+	else:
+		list = list[2:(show_tot-int(show_watched))]
+	
 	list = list[int(start_show):int(end_show)]
 	
 	for each in list:
 
-			show_url = BASE_URL + each.xpath(".//td//a/@href")[0]
-			page_data = HTML.ElementFromURL(show_url)
-			show_title = page_data.xpath("//*[@id='leftside']/div[1]/div[2]/div[2]/a/text()")[0]
-			show_summary = page_data.xpath("//*[@id='leftside']/div[1]/div[2]/div[2]//p")
-			i = len(show_summary) - 1
-			show_summary = show_summary[i].xpath(".//text()")
-			summary = ""
-			for each in show_summary:
-				summary = summary + " " + each
-			show_thumb = page_data.xpath("//div[@id='rightside']//img/@src")[0]
+		show_url = BASE_URL + each.xpath(".//td//a/@href")[0]
+		page_data = HTML.ElementFromURL(show_url)
+		show_title = page_data.xpath("//*[@id='leftside']/div[1]/div[2]/div[2]/a/text()")[0]
+		show_summary = page_data.xpath("//*[@id='leftside']/div[1]/div[2]/div[2]//p")
+		i = len(show_summary) - 1
+		show_summary = show_summary[i].xpath(".//text()")
+		summary = ""
+		for each in show_summary:
+			summary = summary + " " + each
+		show_thumb = page_data.xpath("//div[@id='rightside']//img/@src")[0]
 			
-			oc.add(DirectoryObject(
-				key = Callback(PageEpisodes, show_title = show_title, show_url = show_url),
-				title = show_title,
-				summary = summary,
-				thumb = Resource.ContentsOfURLWithFallback(url = show_thumb, fallback='icon-cover.png')
-				)
+		oc.add(DirectoryObject(
+			key = Callback(PageEpisodes, show_title = show_title, show_url = show_url),
+			title = show_title,
+			summary = summary,
+			thumb = Resource.ContentsOfURLWithFallback(url = show_thumb, fallback='icon-cover.png')
 			)
+		)
 	return oc
 
 #####################################################################################
@@ -328,7 +365,6 @@ def ListEpisodes(show_title, show_url, start_ep, end_ep):
 	for each in eps_list[int(start_ep):int(end_ep)]:
 		ep_url = BASE_URL + each.xpath("./@href")[0]
 		ep_title = each.xpath("./text()")[0].split(show_title,1)[1]
-		Log(ep_title)
 		
 		if ep_title.find("_") < 1:
 			
