@@ -148,7 +148,7 @@ def Bookmark():
 		list_watched = page_data.xpath("//*[@id='container']/div[1]/div[2]/div[2]/table//tr/td[3]/a[1][@style='display: inline']")
 		show_watched = len(list_watched)
 		list = page_data.xpath("//table[@class='listing']//tr")
-		show_unwatched = len(list) - 2 - show_watched
+		show_unwatched = len(list) - 2 - show_watched			
 		
 		if show_unwatched > 0:
 			
@@ -379,90 +379,108 @@ def ListEpisodes(show_title, show_url, start_ep, end_ep):
 			elif Prefs["quality"] == "1080p":
 			
 				page_data = HTML.ElementFromURL(ep_url)
-				data = HTML.StringFromElement(page_data)
+				mirror_list = page_data.xpath("//*[@id='divDownload']//a/@href")
+				len_mirror = len(mirror_list)
 				
-				txha = RE_txha.search(data).group().split("= '",1)[1]
-				fmt_stream = txha.split("=",2)[2].split("&",1)[0]
-				fmt_stream = fmt_stream.replace("%252C",",").replace("%2f","/").replace("%3f","?").replace("%3d","=").replace("%26","&").replace("%3a",":").replace("https","http")
+				found = 0
+				i = 0
+				while found == 0:
 				
-				
-				if fmt_stream.find("itag=37") > 0:
-					url = ep_url + "??" + fmt_stream.split("37%7C",1)[1].split("%2C",1)[0]
-					title = ep_title + " - 1920x1080"
-
-					oc.add(VideoClipObject(
-						url = url,
-						title = title
+					if mirror_list[i].find("itag=37") > 0:
+						url = ep_url + "??" + mirror_list[i]
+						title = ep_title + " - 1920x1080"
+						oc.add(VideoClipObject(
+							url = url,
+							title = title
+							)
 						)
-					)
-						
-				elif fmt_stream.find("itag=22") > 0:
-					url = ep_url + "??" + fmt_stream.split("22%7C",1)[1].split("%2C",1)[0]
-					title = ep_title + " - 1280x720"
+						found = 1
+							
+					elif mirror_list[i].find("itag=22") > 0:
+						url = ep_url + "??" + mirror_list[i]
+						title = ep_title + " - 1280x720"
+						oc.add(VideoClipObject(
+							url = url,
+							title = title
+							)
+						)
+						found = 1
+							
+					elif mirror_list[i].find("itag=18") > 0:
+						url = ep_url + "??" + mirror_list[i]
+						title = ep_title + " - 640x360"
+						oc.add(VideoClipObject(
+							url = url,
+							title = title
+							)
+						)
+						found = 1
 					
-					oc.add(VideoClipObject(
-						url = url,
-						title = title
-						)
-					)
-						
-				elif fmt_stream.find("itag=18") > 0:
-					url = ep_url + "??" + fmt_stream.split("18%7C",1)[1]
-					title = ep_title + " - 640x360"
-						
-					oc.add(VideoClipObject(
-						url = url,
-						title = title
-						)
-					)
+					i = i + 1
+					
+					if i == len_mirror:
+						found = 1
 					
 			elif Prefs["quality"] == "720p":
 			
 				page_data = HTML.ElementFromURL(ep_url)
-				data = HTML.StringFromElement(page_data)
+				mirror_list = page_data.xpath("//*[@id='divDownload']//a/@href")
+				len_mirror = len(mirror_list)
 				
-				txha = RE_txha.search(data).group().split("= '",1)[1]
-				fmt_stream = txha.split("=",2)[2].split("&",1)[0]
-				fmt_stream = fmt_stream.replace("%252C",",").replace("%2f","/").replace("%3f","?").replace("%3d","=").replace("%26","&").replace("%3a",":").replace("https","http")
+				found = 0
+				i = 0
+				while found == 0:
 						
-				if fmt_stream.find("itag=22") > 0:
-					url = ep_url + "??" + fmt_stream.split("22%7C",1)[1].split("%2C",1)[0]
-					title = ep_title + " - 1280x720"
+					if mirror_list[i].find("itag=22") > 0:
+						url = ep_url + "??" + mirror_list[i]
+						title = ep_title + " - 1280x720"
+						oc.add(VideoClipObject(
+							url = url,
+							title = title
+							)
+						)
+						found = 1
+							
+					elif mirror_list[i].find("itag=18") > 0:
+						url = ep_url + "??" + mirror_list[i]
+						title = ep_title + " - 640x360"
+						oc.add(VideoClipObject(
+							url = url,
+							title = title
+							)
+						)
+						found = 1
 					
-					oc.add(VideoClipObject(
-						url = url,
-						title = title
-						)
-					)
-						
-				elif fmt_stream.find("itag=18") > 0:
-					url = ep_url + "??" + fmt_stream.split("18%7C",1)[1]
-					title = ep_title + " - 640x360"
-						
-					oc.add(VideoClipObject(
-						url = url,
-						title = title
-						)
-					)
+					i = i + 1
+					
+					if i == len_mirror:
+						found = 1
 					
 			elif Prefs["quality"] == "360p":
 			
 				page_data = HTML.ElementFromURL(ep_url)
-				data = HTML.StringFromElement(page_data)
+				mirror_list = page_data.xpath("//*[@id='divDownload']//a/@href")
+				len_mirror = len(mirror_list)
 				
-				txha = RE_txha.search(data).group().split("= '",1)[1]
-				fmt_stream = txha.split("=",2)[2].split("&",1)[0]
-				fmt_stream = fmt_stream.replace("%252C",",").replace("%2f","/").replace("%3f","?").replace("%3d","=").replace("%26","&").replace("%3a",":").replace("https","http")
-						
-				if fmt_stream.find("itag=18") > 0:
-					url = ep_url + "??" + fmt_stream.split("18%7C",1)[1]
-					title = ep_title + " - 640x360"
-						
-					oc.add(VideoClipObject(
-						url = url,
-						title = title
+				found = 0
+				i = 0
+				while found == 0:
+				
+					if mirror_list[i].find("itag=18") > 0:
+						url = ep_url + "??" + mirror_list[i]
+						title = ep_title + " - 640x360"
+						oc.add(VideoClipObject(
+							url = url,
+							title = title
+							)
 						)
-					)		
+						found = 1
+					
+					i = i + 1
+					
+					if i == len_mirror:
+						found = 1
+					
 	return oc
 
 #####################################################################################
@@ -475,42 +493,39 @@ def Episodes(show_title, ep_title, ep_url):
 	oc = ObjectContainer(title1=show_title)
 	
 	page_data = HTML.ElementFromURL(ep_url)
-	data = HTML.StringFromElement(page_data)
+	mirror_list = page_data.xpath("//*[@id='divDownload']//a/@href")	
 	
-	txha = RE_txha.search(data).group().split("= '",1)[1]
-	fmt_stream = txha.split("=",2)[2].split("&",1)[0]
-	fmt_stream = fmt_stream.replace("%252C",",").replace("%2f","/").replace("%3f","?").replace("%3d","=").replace("%26","&").replace("%3a",":").replace("https","http")
+	for each in mirror_list:
 	
-	
-	if fmt_stream.find("itag=37") > 0:
-		url = ep_url + "??" + fmt_stream.split("37%7C",1)[1].split("%2C",1)[0]
-		title = "1920x1080"
+		if each.find("itag=37") > 0:
+			url = ep_url + "??" + each
+			title = "1920x1080"
 
-		oc.add(VideoClipObject(
-			url = url,
-			title = title
+			oc.add(VideoClipObject(
+				url = url,
+				title = title
+				)
 			)
-		)
+				
+		if each.find("itag=22") > 0:
+			url = ep_url + "??" + each
+			title = "1280x720"
 			
-	if fmt_stream.find("itag=22") > 0:
-		url = ep_url + "??" + fmt_stream.split("22%7C",1)[1].split("%2C",1)[0]
-		title = "1280x720"
-		
-		oc.add(VideoClipObject(
-			url = url,
-			title = title
+			oc.add(VideoClipObject(
+				url = url,
+				title = title
+				)
 			)
-		)
-			
-	if fmt_stream.find("itag=18") > 0:
-		url = ep_url + "??" + fmt_stream.split("18%7C",1)[1]
-		title = "640x360"
-			
-		oc.add(VideoClipObject(
-			url = url,
-			title = title
+				
+		if each.find("itag=18") > 0:
+			url = ep_url + "??" + each
+			title = "640x360"
+				
+			oc.add(VideoClipObject(
+				url = url,
+				title = title
+				)
 			)
-		)
 	
 	
 	return oc
