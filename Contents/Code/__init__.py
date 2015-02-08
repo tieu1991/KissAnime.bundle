@@ -99,9 +99,8 @@ def Search(query):
 def Bookmark():
     
 	oc = ObjectContainer()
-
 	if Prefs["login"] == 0:
-		
+	
 		for each in Dict:
 			show_url = Dict[each]
 			page_data = HTML.ElementFromURL(show_url)
@@ -132,7 +131,6 @@ def Bookmark():
 		)
 		
 	else:
-		
 		#setup the login request url
 		request_url = "http://kissanime.com/Login"
 		ad_bookmark = "http://kissanime.com/BookmarkList"
@@ -143,13 +141,11 @@ def Bookmark():
 
 		#do http request for search data
 		page = HTTP.Request(request_url, values = values)
-		
 		page_data = HTML.ElementFromURL(ad_bookmark)
 		list_watched = page_data.xpath("//*[@id='container']/div[1]/div[2]/div[2]/table//tr/td[3]/a[1][@style='display: inline']")
 		show_watched = len(list_watched)
 		list = page_data.xpath("//table[@class='listing']//tr")
 		show_unwatched = len(list) - 2 - show_watched			
-		
 		if show_unwatched > 0:
 			
 			oc.add(DirectoryObject(
@@ -158,7 +154,6 @@ def Bookmark():
 				thumb = R(ICON_QUEUE),
 				)
 			)
-		
 		if show_watched > 0:
 			
 			oc.add(DirectoryObject(
@@ -167,7 +162,6 @@ def Bookmark():
 				thumb = R(ICON_QUEUE),
 				)
 			)
-		
 	return oc
 	
 #####################################################################################
@@ -285,6 +279,7 @@ def PageEpisodes(show_title, show_url):
 	show_ep_count = len(page_data.xpath("//div[@id='leftside']//table[@class='listing']//tr")) - 2
 	eps_list = page_data.xpath("//div[@id='leftside']//table[@class='listing']//tr/td//a/text()")
 	eps_list.reverse()
+	Log(len(eps_list))
 	
 	#set a start point and determine how many objects we will need
 	offset = 0
@@ -295,12 +290,12 @@ def PageEpisodes(show_title, show_url):
 	
 		start_ep  = offset
 		end_ep = offset + 20
-		start_ep_title = eps_list[(start_ep)].split((show_title + " "),1)[1].split(" ")[1]
-		end_ep_title = eps_list[(end_ep-1)].split((show_title + " "),1)[1].split(" ")[1]
+		start_ep_title = eps_list[(start_ep)].split((show_title + " "),1)[1]
+		end_ep_title = eps_list[(end_ep-1)].split((show_title + " "),1)[1]
 		
 		oc.add(DirectoryObject(
 			key = Callback(ListEpisodes, show_title = show_title, show_url = show_url, start_ep = start_ep, end_ep = end_ep),
-			title = "Episodes " + start_ep_title + " - " + end_ep_title,
+			title = start_ep_title + " - " + end_ep_title,
 			thumb = Resource.ContentsOfURLWithFallback(url = show_thumb, fallback='icon-cover.png')
 			)
 		)
@@ -328,13 +323,13 @@ def PageEpisodes(show_title, show_url):
 
 		start_ep = offset
 		end_ep = (offset + (show_ep_count % 20))
-		start_ep_title = eps_list[(start_ep)].split((show_title + " "),1)[1].split(" ")[1]
-		end_ep_title = eps_list[(end_ep-1)].split((show_title + " "),1)[1].split(" ")[1]
+		start_ep_title = eps_list[(start_ep)].split((show_title + " "),1)[1]
+		end_ep_title = eps_list[(end_ep-1)].split((show_title + " "),1)[1]
 		
 		oc.add(DirectoryObject(
 			key = Callback(ListEpisodes, show_title = show_title, show_url = show_url, start_ep = start_ep, end_ep = end_ep),
-			title = "Episodes " + start_ep_title + " - " + end_ep_title,
-			thumb = Resource.ContentsOfURLWithFallback(url = show_thumb, fallback='icon-cover.png'),
+			title = start_ep_title + " - " + end_ep_title,
+			thumb = Resource.ContentsOfURLWithFallback(url = show_thumb, fallback='icon-cover.png')
 			)
 		)
 
@@ -365,27 +360,27 @@ def ListEpisodes(show_title, show_url, start_ep, end_ep):
 	for each in eps_list[int(start_ep):int(end_ep)]:
 		ep_url = BASE_URL + each.xpath("./@href")[0]
 		ep_title = each.xpath("./text()")[0].split(show_title,1)[1]
-		
-		if ep_title.find("_") < 1:
 			
-			if Prefs["quality"] == "Choose":
+		if Prefs["quality"] == "Choose":
 			
-				oc.add(DirectoryObject(
-					key = Callback(Episodes, show_title = show_title, ep_title = ep_title, ep_url = ep_url), 
-					title = ep_title
-					)
+			oc.add(DirectoryObject(
+				key = Callback(Episodes, show_title = show_title, ep_title = ep_title, ep_url = ep_url), 
+				title = ep_title
 				)
+			)
 				
-			elif Prefs["quality"] == "1080p":
+		elif Prefs["quality"] == "1080p":
+		
+			page_data = HTML.ElementFromURL(ep_url)
+			mirror_list = page_data.xpath("//*[@id='divDownload']//a/@href")
+			len_mirror = len(mirror_list)
+				
+			if len_mirror > 0:
 			
-				page_data = HTML.ElementFromURL(ep_url)
-				mirror_list = page_data.xpath("//*[@id='divDownload']//a/@href")
-				len_mirror = len(mirror_list)
-				
 				found = 0
 				i = 0
 				while found == 0:
-				
+					
 					if mirror_list[i].find("itag=37") > 0:
 						url = ep_url + "??" + mirror_list[i]
 						title = ep_title + " - 1920x1080"
@@ -405,7 +400,7 @@ def ListEpisodes(show_title, show_url, start_ep, end_ep):
 							)
 						)
 						found = 1
-							
+								
 					elif mirror_list[i].find("itag=18") > 0:
 						url = ep_url + "??" + mirror_list[i]
 						title = ep_title + " - 640x360"
@@ -415,17 +410,19 @@ def ListEpisodes(show_title, show_url, start_ep, end_ep):
 							)
 						)
 						found = 1
-					
+						
 					i = i + 1
-					
-					if i == len_mirror:
+						
+					if i >= len_mirror:
 						found = 1
 					
-			elif Prefs["quality"] == "720p":
+		elif Prefs["quality"] == "720p":
 			
-				page_data = HTML.ElementFromURL(ep_url)
-				mirror_list = page_data.xpath("//*[@id='divDownload']//a/@href")
-				len_mirror = len(mirror_list)
+			page_data = HTML.ElementFromURL(ep_url)
+			mirror_list = page_data.xpath("//*[@id='divDownload']//a/@href")
+			len_mirror = len(mirror_list)
+				
+			if len_mirror > 0:	
 				
 				found = 0
 				i = 0
@@ -440,7 +437,7 @@ def ListEpisodes(show_title, show_url, start_ep, end_ep):
 							)
 						)
 						found = 1
-							
+								
 					elif mirror_list[i].find("itag=18") > 0:
 						url = ep_url + "??" + mirror_list[i]
 						title = ep_title + " - 640x360"
@@ -450,22 +447,24 @@ def ListEpisodes(show_title, show_url, start_ep, end_ep):
 							)
 						)
 						found = 1
-					
+						
 					i = i + 1
-					
-					if i == len_mirror:
+						
+					if i >= len_mirror:
 						found = 1
 					
-			elif Prefs["quality"] == "360p":
+		elif Prefs["quality"] == "360p":
 			
-				page_data = HTML.ElementFromURL(ep_url)
-				mirror_list = page_data.xpath("//*[@id='divDownload']//a/@href")
-				len_mirror = len(mirror_list)
-				
+			page_data = HTML.ElementFromURL(ep_url)
+			mirror_list = page_data.xpath("//*[@id='divDownload']//a/@href")
+			len_mirror = len(mirror_list)
+			
+			if len_mirror > 0:
+			
 				found = 0
 				i = 0
 				while found == 0:
-				
+					
 					if mirror_list[i].find("itag=18") > 0:
 						url = ep_url + "??" + mirror_list[i]
 						title = ep_title + " - 640x360"
@@ -475,10 +474,10 @@ def ListEpisodes(show_title, show_url, start_ep, end_ep):
 							)
 						)
 						found = 1
-					
+						
 					i = i + 1
-					
-					if i == len_mirror:
+						
+					if i >= len_mirror:
 						found = 1
 					
 	return oc

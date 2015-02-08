@@ -1,8 +1,8 @@
 # KissAnime.bundle
 
-Version 1.3
+Version 1.4
 
-Fix for the updated site
+Fix loading of episodes bug for some anime who didn't load
 
 By tieu1991
 

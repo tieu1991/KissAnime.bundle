@@ -2,14 +2,14 @@
 	{
 		"id": "quality",
 		"type": "enum",
-		"label": "Quality",
+		"label": "Quality (Faster loading of episodes with the Choose option)",
 		"values": ["Choose", "1080p", "720p", "360p"],
-		"default": "1080p"
+		"default": "Choose"
 	},
 	{
 		"id": "login",
 		"type": "bool",
-		"label": "Enable Login (Slower loading of bookmark)",
+		"label": "Enable Login (Slower loading of Bookmark)",
 		"default": "false"
 	},
 	{

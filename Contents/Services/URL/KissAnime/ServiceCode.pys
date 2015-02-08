@@ -9,9 +9,9 @@ ICON_COVER = "icon-cover.png"
 def MetadataObjectForURL(url):
 	
 	show_data = HTML.ElementFromURL(url.split("??",1)[0].rsplit('/',1)[0])
+	show_title = show_data.xpath("//*[@id='leftside']/div[1]/div[2]/div[2]/a/text()")[0]
 	ep_data = HTML.ElementFromURL(url.split("??",1)[0])
-	ep_title = ep_data.xpath("//*[@id='divContentVideo']/meta[1]/@content")[0].replace(" - ","&").rsplit(" ",2)
-	ep_title = ep_title[1] + " " + ep_title[2]
+	ep_title = ep_data.xpath("//*[@id='divContentVideo']/meta[1]/@content")[0].split((show_title + " "),1)[1]
 	show_genres = show_data.xpath("//*[@id='leftside']/div[1]/div[2]/div[2]/p[2]//a/text()")
 	show_summary = show_data.xpath("//*[@id='leftside']/div[1]/div[2]/div[2]//p")
 	i = len(show_summary) - 1
@@ -19,6 +19,7 @@ def MetadataObjectForURL(url):
 	summary = ""
 	for each in show_summary:
 		summary = summary + " " + each
+	summary = summary.strip()
 	up_date = ep_data.xpath("//*[@id='divContentVideo']/meta[4]/@content")[0].split("-",1)[0]
 	show_thumb = show_data.xpath("//div[@id='rightside']//img/@src")[0]
 			
@@ -59,5 +60,5 @@ def MediaObjectsForURL(url):
 		]
 		
 def PlayVideo(url):
- 
-    return Redirect(url)
+	
+	return Redirect(url)
