@@ -1,3 +1,5 @@
+DEPRECATED
+
 # KissAnime.bundle
 
 Version 1.4
